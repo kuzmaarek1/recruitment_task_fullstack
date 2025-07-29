@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use App\Controller\SupportedCurrency;
+use App\Enum\SupportedCurrency;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'exchange_rate')]
