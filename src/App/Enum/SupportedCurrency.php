@@ -22,4 +22,4 @@ enum SupportedCurrency: string
             self::BRL => 'real (Brazylia)',
         };
     }
-} 
+}

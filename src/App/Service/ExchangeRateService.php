@@ -41,12 +41,10 @@ class ExchangeRateService
         $fields = $record['fields'] ?? [];
         
         $entity = new ExchangeRate();
-        // Airtable ID to string, więc nie przypisujemy go do int id
-        
-        // Sprawdzamy czy pola istnieją, jeśli nie - używamy domyślnych wartości
-        $entity->date = new \DateTime($fields['date'] ?? 'now');
-        $entity->currencyCode = SupportedCurrency::from($fields['currency_code'] ?? 'EUR');
-        $entity->mid = (float) ($fields['mid'] ?? 0);
+        $entity->id = (int) ($record['id']);
+        $entity->date = new \DateTime($fields['date']);
+        $entity->currencyCode = SupportedCurrency::from($fields['currency_code']);
+        $entity->mid = (float) ($fields['mid']);
         
         return $entity;
     }
