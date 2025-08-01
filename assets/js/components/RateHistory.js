@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const RateHistory = () => {
     const [historyData, setHistoryData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [selectedCurrency, setSelectedCurrency] = useState('EUR');
     const [selectedDate, setSelectedDate] = useState('2024-01-15');
 
@@ -162,22 +164,75 @@ const RateHistory = () => {
     ];
 
     useEffect(() => {
-        // Symulacja ładowania danych
-        setTimeout(() => {
-            const data = selectedCurrency === 'USD' ? mockUSDHistoryData : mockHistoryData;
-            setHistoryData(data);
-            setLoading(false);
-        }, 500);
-    }, [selectedCurrency]);
+        const fetchHistoryData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const response = await axios.get('/api/rate-history', {
+                    params: {
+                        currency: selectedCurrency,
+                        date: selectedDate
+                    }
+                });
+                console.log('API Response:', response.data); // Debug
+                
+                // Sprawdź czy response.data jest tablicą
+                if (Array.isArray(response.data)) {
+                    setHistoryData(response.data);
+                } else {
+                    console.error('API zwróciło nieprawidłowy format danych:', response.data);
+                    setError('Nieprawidłowy format danych z API');
+                    const data = selectedCurrency === 'USD' ? mockUSDHistoryData : mockHistoryData;
+                    setHistoryData(data);
+                }
+            } catch (err) {
+                console.error('Błąd podczas pobierania historii:', err);
+                setError('Nie udało się pobrać historii kursów');
+                // Fallback do mock danych w przypadku błędu
+                const data = selectedCurrency === 'USD' ? mockUSDHistoryData : mockHistoryData;
+                setHistoryData(data);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchHistoryData();
+    }, [selectedCurrency, selectedDate]);
 
     const handleShowHistory = () => {
-        setLoading(true);
-        // Symulacja zapytania do API
-        setTimeout(() => {
-            const data = selectedCurrency === 'USD' ? mockUSDHistoryData : mockHistoryData;
-            setHistoryData(data);
-            setLoading(false);
-        }, 500);
+        const fetchHistoryData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const response = await axios.get('/api/rate-history', {
+                    params: {
+                        currency: selectedCurrency,
+                        date: selectedDate
+                    }
+                });
+                console.log('API Response:', response.data); // Debug
+                
+                // Sprawdź czy response.data jest tablicą
+                if (Array.isArray(response.data)) {
+                    setHistoryData(response.data);
+                } else {
+                    console.error('API zwróciło nieprawidłowy format danych:', response.data);
+                    setError('Nieprawidłowy format danych z API');
+                    const data = selectedCurrency === 'USD' ? mockUSDHistoryData : mockHistoryData;
+                    setHistoryData(data);
+                }
+            } catch (err) {
+                console.error('Błąd podczas pobierania historii:', err);
+                setError('Nie udało się pobrać historii kursów');
+                // Fallback do mock danych w przypadku błędu
+                const data = selectedCurrency === 'USD' ? mockUSDHistoryData : mockHistoryData;
+                setHistoryData(data);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchHistoryData();
     };
 
     const formatCurrency = (value) => {
@@ -220,6 +275,17 @@ const RateHistory = () => {
                     <div className="spinner-border" role="status">
                         <span className="sr-only">Ładowanie...</span>
                     </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="container mt-4">
+                <div className="alert alert-warning" role="alert">
+                    <i className="fas fa-exclamation-triangle mr-2"></i>
+                    {error} - Wyświetlane są dane przykładowe
                 </div>
             </div>
         );
@@ -305,39 +371,47 @@ const RateHistory = () => {
                                             <th scope="col" className="text-center">Zmiana</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        {historyData.map((rate, index) => {
-                                            const exchangeRates = calculateExchangeRates(rate.mid, rate.currency);
-                                            const previousRate = index > 0 ? historyData[index - 1].mid : null;
-                                            return (
-                                                <tr key={rate.id} className={index % 2 === 0 ? 'table-striped' : ''}>
-                                                    <td className="text-center font-weight-bold">
-                                                        {formatDate(rate.date)}
-                                                    </td>
-                                                    <td className="text-center text-info">
-                                                        {formatCurrency(rate.mid)}
-                                                    </td>
-                                                    <td className="text-center">
-                                                        {exchangeRates.buyRate ? (
-                                                            <span className="text-success font-weight-bold">
-                                                                {formatCurrency(exchangeRates.buyRate)}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-muted">-</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="text-center">
-                                                        <span className="text-danger font-weight-bold">
-                                                            {formatCurrency(exchangeRates.sellRate)}
-                                                        </span>
-                                                    </td>
-                                                    <td className="text-center">
-                                                        {formatChange(rate.mid, previousRate)}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
+                                                                         <tbody>
+                                         {Array.isArray(historyData) && historyData.length > 0 ? (
+                                             historyData.map((rate, index) => {
+                                                 const exchangeRates = calculateExchangeRates(rate.mid, rate.currency);
+                                                 const previousRate = index > 0 ? historyData[index - 1].mid : null;
+                                                 return (
+                                                     <tr key={rate.id} className={index % 2 === 0 ? 'table-striped' : ''}>
+                                                         <td className="text-center font-weight-bold">
+                                                             {formatDate(rate.date)}
+                                                         </td>
+                                                         <td className="text-center text-info">
+                                                             {formatCurrency(rate.mid)}
+                                                         </td>
+                                                         <td className="text-center">
+                                                             {exchangeRates.buyRate ? (
+                                                                 <span className="text-success font-weight-bold">
+                                                                     {formatCurrency(exchangeRates.buyRate)}
+                                                                 </span>
+                                                             ) : (
+                                                                 <span className="text-muted">-</span>
+                                                             )}
+                                                         </td>
+                                                         <td className="text-center">
+                                                             <span className="text-danger font-weight-bold">
+                                                                 {formatCurrency(exchangeRates.sellRate)}
+                                                             </span>
+                                                         </td>
+                                                         <td className="text-center">
+                                                             {formatChange(rate.mid, previousRate)}
+                                                         </td>
+                                                     </tr>
+                                                 );
+                                             })
+                                         ) : (
+                                             <tr>
+                                                 <td colSpan="5" className="text-center text-muted">
+                                                     Brak danych do wyświetlenia
+                                                 </td>
+                                             </tr>
+                                         )}
+                                     </tbody>
                                 </table>
                             </div>
                         </div>

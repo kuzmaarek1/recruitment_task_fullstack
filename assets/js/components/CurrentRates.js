@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const CurrentRates = () => {
     const [rates, setRates] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     // Fikcyjne dane JSON z aktualnymi kursami walut (struktura zgodna z API)
     const mockRatesData = [
@@ -44,11 +46,32 @@ const CurrentRates = () => {
     ];
 
     useEffect(() => {
-        // Symulacja ładowania danych
-        setTimeout(() => {
-            setRates(mockRatesData);
-            setLoading(false);
-        }, 500);
+        const fetchCurrentRates = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const response = await axios.get('/api/current-rates');
+                console.log('API Response:', response.data); // Debug
+                
+                // Sprawdź czy response.data jest tablicą
+                if (Array.isArray(response.data)) {
+                    setRates(response.data);
+                } else {
+                    console.error('API zwróciło nieprawidłowy format danych:', response.data);
+                    setError('Nieprawidłowy format danych z API');
+                    setRates(mockRatesData);
+                }
+            } catch (err) {
+                console.error('Błąd podczas pobierania kursów:', err);
+                setError('Nie udało się pobrać aktualnych kursów walut');
+                // Fallback do mock danych w przypadku błędu
+                setRates(mockRatesData);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCurrentRates();
     }, []);
 
     const formatCurrency = (value) => {
@@ -83,6 +106,17 @@ const CurrentRates = () => {
                     <div className="spinner-border" role="status">
                         <span className="sr-only">Ładowanie...</span>
                     </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="container mt-4">
+                <div className="alert alert-warning" role="alert">
+                    <i className="fas fa-exclamation-triangle mr-2"></i>
+                    {error} - Wyświetlane są dane przykładowe
                 </div>
             </div>
         );
@@ -123,45 +157,53 @@ const CurrentRates = () => {
                                             <th scope="col" className="text-center">Spread</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        {rates.map((rate, index) => {
-                                            const exchangeRates = calculateExchangeRates(rate.mid, rate.currency);
-                                            return (
-                                                <tr key={rate.id} className={index % 2 === 0 ? 'table-striped' : ''}>
-                                                    <td className="text-center font-weight-bold">
-                                                        <span className="badge badge-primary">{rate.currency}</span>
-                                                    </td>
-                                                    <td className="text-center">{rate.currencyName}</td>
-                                                    <td className="text-center text-info">
-                                                        {formatCurrency(rate.mid)}
-                                                    </td>
-                                                    <td className="text-center">
-                                                        {exchangeRates.buyRate ? (
-                                                            <span className="text-success font-weight-bold">
-                                                                {formatCurrency(exchangeRates.buyRate)}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-muted">-</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="text-center">
-                                                        <span className="text-danger font-weight-bold">
-                                                            {formatCurrency(exchangeRates.sellRate)}
-                                                        </span>
-                                                    </td>
-                                                    <td className="text-center">
-                                                        {exchangeRates.buyRate ? (
-                                                            <span className="text-warning">
-                                                                {(exchangeRates.sellRate - exchangeRates.buyRate).toFixed(4)} PLN
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-muted">-</span>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
+                                                                         <tbody>
+                                         {Array.isArray(rates) && rates.length > 0 ? (
+                                             rates.map((rate, index) => {
+                                                 const exchangeRates = calculateExchangeRates(rate.mid, rate.currency);
+                                                 return (
+                                                     <tr key={rate.id} className={index % 2 === 0 ? 'table-striped' : ''}>
+                                                         <td className="text-center font-weight-bold">
+                                                             <span className="badge badge-primary">{rate.currency}</span>
+                                                         </td>
+                                                         <td className="text-center">{rate.currencyName}</td>
+                                                         <td className="text-center text-info">
+                                                             {formatCurrency(rate.mid)}
+                                                         </td>
+                                                         <td className="text-center">
+                                                             {exchangeRates.buyRate ? (
+                                                                 <span className="text-success font-weight-bold">
+                                                                     {formatCurrency(exchangeRates.buyRate)}
+                                                                 </span>
+                                                             ) : (
+                                                                 <span className="text-muted">-</span>
+                                                             )}
+                                                         </td>
+                                                         <td className="text-center">
+                                                             <span className="text-danger font-weight-bold">
+                                                                 {formatCurrency(exchangeRates.sellRate)}
+                                                             </span>
+                                                         </td>
+                                                         <td className="text-center">
+                                                             {exchangeRates.buyRate ? (
+                                                                 <span className="text-warning">
+                                                                     {(exchangeRates.sellRate - exchangeRates.buyRate).toFixed(4)} PLN
+                                                                 </span>
+                                                             ) : (
+                                                                 <span className="text-muted">-</span>
+                                                             )}
+                                                         </td>
+                                                     </tr>
+                                                 );
+                                             })
+                                         ) : (
+                                             <tr>
+                                                 <td colSpan="6" className="text-center text-muted">
+                                                     Brak danych do wyświetlenia
+                                                 </td>
+                                             </tr>
+                                         )}
+                                     </tbody>
                                 </table>
                             </div>
                         </div>

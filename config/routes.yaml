@@ -12,6 +12,14 @@ exchange_rates:
     path: /api/exchange-rates
     controller: App\Controller\ExchangeRateController::index
 
+current_rates:
+    path: /api/current-rates
+    controller: App\Controller\ExchangeRateController::getCurrentRates
+
+rate_history:
+    path: /api/rate-history
+    controller: App\Controller\ExchangeRateController::getRateHistory
+
 index:
     path: /{wildcard}
     defaults: {
