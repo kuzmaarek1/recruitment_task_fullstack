@@ -48,8 +48,7 @@ class ExchangeRateService
             $records = $data['records'] ?? [];
             
             $allRecords = array_merge($allRecords, $records);
-            
-            // Sprawdź czy jest offset dla następnej strony
+
             $offset = $data['offset'] ?? null;
             
         } while ($offset !== null);
@@ -82,29 +81,27 @@ class ExchangeRateService
         $currencyRates = array_filter($allRates, function($rate) use ($currency) {
             return $rate->currencyCode->value === $currency;
         });
-        
-        // Sortuj po dacie malejąco
+ 
         usort($currencyRates, function($a, $b) {
             return $b->date <=> $a->date;
         });
         
-        // Znajdź kursy z ostatnich 14 dni przed podaną datą
         $historyRates = [];
+        $addedDates = [];
         foreach ($currencyRates as $rate) {
             if ($rate->date <= $targetDate) {
-                $historyRates[] = $rate;
+                $dateKey = $rate->date->format('Y-m-d');
                 
-                // Ogranicz do 14 dni
-                if (count($historyRates) >= 14) {
-                    break;
+                if (!in_array($dateKey, $addedDates)) {
+                    $historyRates[] = $rate;
+                    $addedDates[] = $dateKey; 
+                    
+                    if (count($historyRates) >= 14) {
+                        break;
+                    }
                 }
             }
         }
-        
-        // Sortuj po dacie rosnąco dla lepszej prezentacji
-        usort($historyRates, function($a, $b) {
-            return $a->date <=> $b->date;
-        });
         
         return $historyRates;
     }

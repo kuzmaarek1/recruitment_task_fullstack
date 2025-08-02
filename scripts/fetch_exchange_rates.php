@@ -10,17 +10,14 @@ require_once __DIR__ . '/../../../vendor/autoload.php';
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
-// Configuration
 $airtableConfig = [
     'base_id' => 'appAiGuC5XR2IQii3',
     'api_key' => 'patxVMVkclfHia53a.4ea78ef893e55507287f04bc49e3fdf8c8cd40eff15637bd8ab4aed1482a6302',
     'table_name' => 'exchange_rates'
 ];
 
-// Supported currencies
 $supportedCurrencies = ['EUR', 'USD', 'CZK', 'IDR', 'BRL'];
 
-// Initialize HTTP client
 $client = new Client([
     'timeout' => 30,
     'headers' => [
@@ -29,9 +26,7 @@ $client = new Client([
     ]
 ]);
 
-/**
- * Fetch exchange rates from NBP API
- */
+
 function fetchExchangeRates($client) {
     $url = 'https://api.nbp.pl/api/exchangerates/tables/A/?format=json';
     
@@ -75,11 +70,9 @@ function storeRateToAirtable($client, $config, $rate) {
     }
 }
 
-// Main execution
 try {
     echo "Starting exchange rate fetch at " . date('Y-m-d H:i:s') . "\n";
     
-    // Fetch rates from NBP
     $nbpData = fetchExchangeRates($client);
     $effectiveDate = $nbpData['effectiveDate'];
     $rates = $nbpData['rates'];
