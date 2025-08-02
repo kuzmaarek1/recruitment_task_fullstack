@@ -24,16 +24,37 @@ class ExchangeRateService
 
     public function getAll(): array
     {
-        $response = $this->client->request('GET', "https://api.airtable.com/v0/{$this->config['base_id']}/{$this->config['table_name']}", [
-            'headers' => [
-                'Authorization' => "Bearer {$this->config['api_key']}"
-            ]
-        ]);
-
-        $data = json_decode($response->getBody(), true);
-        $records = $data['records'] ?? [];
+        $allRecords = [];
+        $offset = null;
         
-        return array_map([$this, 'mapToEntity'], $records);
+        do {
+            $params = [];
+            if ($offset) {
+                $params['offset'] = $offset;
+            }
+            
+            $url = "https://api.airtable.com/v0/{$this->config['base_id']}/{$this->config['table_name']}";
+            if (!empty($params)) {
+                $url .= '?' . http_build_query($params);
+            }
+            
+            $response = $this->client->request('GET', $url, [
+                'headers' => [
+                    'Authorization' => "Bearer {$this->config['api_key']}"
+                ]
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+            $records = $data['records'] ?? [];
+            
+            $allRecords = array_merge($allRecords, $records);
+            
+            // Sprawdź czy jest offset dla następnej strony
+            $offset = $data['offset'] ?? null;
+            
+        } while ($offset !== null);
+        
+        return array_map([$this, 'mapToEntity'], $allRecords);
     }
 
     public function getCurrentRates(): array

@@ -40,7 +40,9 @@ class ExchangeRateController extends AbstractController
         $currency = $request->query->get('currency', 'EUR');
         $date = $request->query->get('date', date('Y-m-d'));
         
-        if (!in_array($currency, ['EUR', 'USD', 'CZK', 'IDR', 'BRL'])) {
+        try {
+            SupportedCurrency::from($currency);
+        } catch (\ValueError $e) {
             return new Response(
                 json_encode(['error' => 'Nieprawidłowa waluta']),
                 Response::HTTP_BAD_REQUEST,
